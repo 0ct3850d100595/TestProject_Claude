@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ToDo App</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app">
+
+    <!-- Header -->
+    <header class="header">
+      <div class="header-left">
+        <div class="logo">
+          <span class="logo-icon">✅</span>
+          <h1>ToDo</h1>
+        </div>
+        <div class="stats" id="stats">タスクなし</div>
+      </div>
+      <div class="header-right">
+        <button class="btn-icon" id="themeToggle" title="ダーク/ライト切替">🌙</button>
+      </div>
+    </header>
+
+    <!-- Add Task Button -->
+    <div class="add-section">
+      <button class="btn btn-primary btn-add" id="addTaskBtn">
+        ＋ タスクを追加
+      </button>
+    </div>
+
+    <!-- Add / Edit Form -->
+    <div class="form-wrapper" id="formWrapper" aria-hidden="true">
+      <form class="task-form" id="taskForm" novalidate>
+        <div class="form-header">
+          <h2 id="formTitle">新しいタスク</h2>
+          <button type="button" class="btn-icon" id="closeFormBtn" title="閉じる">✕</button>
+        </div>
+
+        <div class="form-body">
+          <div class="form-group">
+            <label for="taskTitle">タイトル <span class="required">*</span></label>
+            <input type="text" id="taskTitle" placeholder="タスクのタイトルを入力..." maxlength="100" autocomplete="off">
+          </div>
+
+          <div class="form-group">
+            <label for="taskDesc">説明</label>
+            <textarea id="taskDesc" placeholder="詳細を入力（任意）..." rows="3" maxlength="500"></textarea>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="taskDue">期日</label>
+              <input type="date" id="taskDue">
+            </div>
+            <div class="form-group">
+              <label for="taskCategory">カテゴリ</label>
+              <input type="text" id="taskCategory" placeholder="例: 仕事, 個人..." list="categoryList" maxlength="30" autocomplete="off">
+              <datalist id="categoryList"></datalist>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>優先度</label>
+            <div class="priority-buttons">
+              <button type="button" class="priority-btn" data-priority="high">🔴 高</button>
+              <button type="button" class="priority-btn active" data-priority="medium">🟡 中</button>
+              <button type="button" class="priority-btn" data-priority="low">🟢 低</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-footer">
+          <button type="button" class="btn btn-ghost" id="cancelBtn">キャンセル</button>
+          <button type="submit" class="btn btn-primary" id="submitBtn">追加</button>
+        </div>
+
+        <input type="hidden" id="editTaskId">
+      </form>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+      <div class="filter-tabs">
+        <button class="filter-tab active" data-filter="all">すべて</button>
+        <button class="filter-tab" data-filter="active">未完了</button>
+        <button class="filter-tab" data-filter="completed">完了済み</button>
+      </div>
+      <div class="filter-controls">
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="searchInput" placeholder="検索..." autocomplete="off">
+        </div>
+        <select id="priorityFilter" class="select">
+          <option value="all">優先度: すべて</option>
+          <option value="high">🔴 高</option>
+          <option value="medium">🟡 中</option>
+          <option value="low">🟢 低</option>
+        </select>
+        <select id="categoryFilter" class="select">
+          <option value="all">カテゴリ: すべて</option>
+        </select>
+        <select id="sortBy" class="select">
+          <option value="created">作成日順</option>
+          <option value="dueDate">期日順</option>
+          <option value="priority">優先度順</option>
+          <option value="alpha">タイトル順</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Task List -->
+    <main class="task-list-wrapper">
+      <div class="task-list" id="taskList"></div>
+      <div class="empty-state" id="emptyState">
+        <div class="empty-icon">📝</div>
+        <h3>タスクがありません</h3>
+        <p>「タスクを追加」ボタンから新しいタスクを作成しましょう</p>
+      </div>
+    </main>
+
+    <!-- Bulk Actions -->
+    <div class="bulk-actions">
+      <button class="btn btn-sm btn-ghost" id="markAllComplete">すべて完了にする</button>
+      <button class="btn btn-sm btn-danger" id="clearCompleted">完了済みを削除</button>
+    </div>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
