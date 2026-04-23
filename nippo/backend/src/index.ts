@@ -6,6 +6,7 @@ dotenv.config()
 
 import { prisma } from './lib/prisma.js'
 import authRouter from './routes/auth.js'
+import reportsRouter from './routes/reports.js'
 
 const app = express()
 const port = process.env.PORT ?? 3000
@@ -14,6 +15,7 @@ app.use(cors())
 app.use(express.json())
 
 app.use('/v1/auth', authRouter)
+app.use('/v1/reports', reportsRouter)
 
 app.get('/health', async (_req, res) => {
   try {
