@@ -1,8 +1,8 @@
 import { Request, Response } from 'express'
 import bcrypt from 'bcrypt'
 import { prisma } from '../lib/prisma.js'
-import { signToken, verifyToken } from '../lib/jwt.js'
-import { addToBlacklist, isBlacklisted } from '../lib/tokenBlacklist.js'
+import { signToken } from '../lib/jwt.js'
+import { addToBlacklist } from '../lib/tokenBlacklist.js'
 import { loginSchema } from '../validators/auth.js'
 
 export async function login(req: Request, res: Response): Promise<void> {
@@ -76,58 +76,20 @@ export function logout(req: Request, res: Response): void {
 }
 
 export async function me(req: Request, res: Response): Promise<void> {
-  const authHeader = req.headers.authorization
-  if (!authHeader?.startsWith('Bearer ')) {
-    res.status(401).json({
-      success: false,
-      error: { code: 'UNAUTHORIZED', message: '認証トークンが必要です' },
-    })
-    return
-  }
-
-  const token = authHeader.slice(7)
-
-  if (isBlacklisted(token)) {
-    res.status(401).json({
-      success: false,
-      error: { code: 'UNAUTHORIZED', message: '認証トークンが無効または期限切れです' },
-    })
-    return
-  }
-
-  let payload: { employeeId: number }
-  try {
-    payload = verifyToken(token)
-  } catch {
-    res.status(401).json({
-      success: false,
-      error: { code: 'UNAUTHORIZED', message: '認証トークンが無効または期限切れです' },
-    })
-    return
-  }
-
   const employee = await prisma.employee.findUnique({
-    where: { id: payload.employeeId },
+    where: { id: req.user.id },
     include: { manager: { select: { name: true } } },
   })
-
-  if (!employee || employee.deletedAt !== null) {
-    res.status(401).json({
-      success: false,
-      error: { code: 'UNAUTHORIZED', message: '認証トークンが無効または期限切れです' },
-    })
-    return
-  }
 
   res.status(200).json({
     success: true,
     data: {
-      id: employee.id,
-      name: employee.name,
-      email: employee.email,
-      role: employee.role,
-      manager_id: employee.managerId,
-      manager_name: employee.manager?.name ?? null,
+      id: employee!.id,
+      name: employee!.name,
+      email: employee!.email,
+      role: employee!.role,
+      manager_id: employee!.managerId,
+      manager_name: employee!.manager?.name ?? null,
     },
   })
 }
