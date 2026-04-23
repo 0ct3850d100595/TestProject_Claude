@@ -81,15 +81,23 @@ export async function me(req: Request, res: Response): Promise<void> {
     include: { manager: { select: { name: true } } },
   })
 
+  if (!employee) {
+    res.status(401).json({
+      success: false,
+      error: { code: 'UNAUTHORIZED', message: '認証トークンが無効または期限切れです' },
+    })
+    return
+  }
+
   res.status(200).json({
     success: true,
     data: {
-      id: employee!.id,
-      name: employee!.name,
-      email: employee!.email,
-      role: employee!.role,
-      manager_id: employee!.managerId,
-      manager_name: employee!.manager?.name ?? null,
+      id: employee.id,
+      name: employee.name,
+      email: employee.email,
+      role: employee.role,
+      manager_id: employee.managerId,
+      manager_name: employee.manager?.name ?? null,
     },
   })
 }
