@@ -97,7 +97,7 @@ export async function listReports(req: Request, res: Response): Promise<void> {
 
 export async function getReport(req: Request, res: Response): Promise<void> {
   const reportId = parseInt(String(req.params.id), 10)
-  if (isNaN(reportId)) {
+  if (isNaN(reportId) || reportId <= 0) {
     res.status(404).json({
       success: false,
       error: { code: 'NOT_FOUND', message: '日報が見つかりません' },

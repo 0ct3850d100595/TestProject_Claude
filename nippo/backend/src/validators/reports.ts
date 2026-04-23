@@ -14,4 +14,12 @@ export const listReportsSchema = z.object({
     .optional(),
   sort: z.enum(['report_date', 'employee_name']).default('report_date'),
   order: z.enum(['asc', 'desc']).default('desc'),
+}).superRefine((data, ctx) => {
+  if (data.date_from && data.date_to && data.date_from > data.date_to) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['date_to'],
+      message: 'date_to は date_from 以降の日付を指定してください',
+    })
+  }
 })
