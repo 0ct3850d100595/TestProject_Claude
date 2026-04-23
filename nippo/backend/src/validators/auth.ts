@@ -5,5 +5,5 @@ export const loginSchema = z.object({
     .string()
     .min(1, { message: 'この項目は必須です' })
     .email({ message: 'メールアドレスの形式が正しくありません' }),
-  password: z.string().min(1, { message: 'この項目は必須です' }),
+  password: z.string().min(8, { message: 'パスワードは8文字以上で入力してください' }),
 })

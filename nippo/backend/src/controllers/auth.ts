@@ -24,8 +24,8 @@ export async function login(req: Request, res: Response): Promise<void> {
 
   const { email, password } = result.data
 
-  const employee = await prisma.employee.findFirst({
-    where: { email, deletedAt: null },
+  const employee = await prisma.employee.findUnique({
+    where: { email },
   })
 
   const unauthorized = (): void => {
@@ -38,7 +38,7 @@ export async function login(req: Request, res: Response): Promise<void> {
     })
   }
 
-  if (!employee) {
+  if (!employee || employee.deletedAt !== null) {
     unauthorized()
     return
   }
@@ -106,12 +106,12 @@ export async function me(req: Request, res: Response): Promise<void> {
     return
   }
 
-  const employee = await prisma.employee.findFirst({
-    where: { id: payload.employeeId, deletedAt: null },
+  const employee = await prisma.employee.findUnique({
+    where: { id: payload.employeeId },
     include: { manager: { select: { name: true } } },
   })
 
-  if (!employee) {
+  if (!employee || employee.deletedAt !== null) {
     res.status(401).json({
       success: false,
       error: { code: 'UNAUTHORIZED', message: '認証トークンが無効または期限切れです' },

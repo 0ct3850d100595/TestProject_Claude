@@ -1,4 +1,4 @@
-import express from 'express'
+import express, { NextFunction, Request, Response } from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
 
@@ -22,6 +22,14 @@ app.get('/health', async (_req, res) => {
   } catch {
     res.status(503).json({ status: 'error', db: 'disconnected' })
   }
+})
+
+app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
+  console.error(err)
+  res.status(500).json({
+    success: false,
+    error: { code: 'INTERNAL_ERROR', message: 'サーバーエラーが発生しました' },
+  })
 })
 
 app.listen(port, () => {
