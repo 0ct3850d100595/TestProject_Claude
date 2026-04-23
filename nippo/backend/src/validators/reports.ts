@@ -23,3 +23,29 @@ export const listReportsSchema = z.object({
     })
   }
 })
+
+const visitRecordInputSchema = z.object({
+  customer_id: z.number().int().positive({ message: '顧客IDは正の整数で指定してください' }),
+  visit_content: z
+    .string()
+    .min(1, { message: '訪問内容は必須です' })
+    .max(1000, { message: '訪問内容は1000文字以内で入力してください' }),
+  sort_order: z.number().int().min(1, { message: '表示順は1以上の整数で指定してください' }),
+})
+
+export const createReportSchema = z.object({
+  report_date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, { message: '日付はYYYY-MM-DD形式で入力してください' })
+    .refine(
+      (val) => new Date(val).toISOString().startsWith(val),
+      { message: '有効な日付を入力してください' },
+    ),
+  problem: z.string().max(2000, { message: '課題・相談は2000文字以内で入力してください' }).optional(),
+  plan: z.string().max(2000, { message: '明日やることは2000文字以内で入力してください' }).optional(),
+  visit_records: z
+    .array(visitRecordInputSchema)
+    .min(1, { message: '訪問記録は1件以上必要です' }),
+})
+
+export const updateReportSchema = createReportSchema
