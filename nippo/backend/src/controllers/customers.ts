@@ -62,8 +62,8 @@ export async function listCustomers(req: Request, res: Response): Promise<void> 
     ...(keyword
       ? {
           OR: [
-            { companyName: { contains: keyword } },
-            { contactName: { contains: keyword } },
+            { companyName: { contains: keyword, mode: 'insensitive' as const } },
+            { contactName: { contains: keyword, mode: 'insensitive' as const } },
           ],
         }
       : {}),
@@ -85,7 +85,7 @@ export async function listCustomers(req: Request, res: Response): Promise<void> 
   res.json({
     success: true,
     data: customers.map(formatCustomer),
-    pagination: {
+    meta: {
       total,
       page,
       per_page,

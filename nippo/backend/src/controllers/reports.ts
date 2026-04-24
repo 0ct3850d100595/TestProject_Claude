@@ -304,7 +304,7 @@ export async function updateReport(req: Request, res: Response): Promise<void> {
   }
 
   const { report_date, problem, plan, visit_records } = result.data
-  const { id: userId } = req.user
+  const { id: userId, role } = req.user
 
   const existing = await prisma.dailyReport.findUnique({
     where: { id: reportId },
@@ -317,7 +317,7 @@ export async function updateReport(req: Request, res: Response): Promise<void> {
     })
     return
   }
-  if (existing.employeeId !== userId) {
+  if (role !== 'admin' && existing.employeeId !== userId) {
     res.status(403).json({
       success: false,
       error: { code: 'FORBIDDEN', message: 'この操作を行う権限がありません' },

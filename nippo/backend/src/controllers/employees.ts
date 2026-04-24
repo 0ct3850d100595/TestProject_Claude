@@ -82,7 +82,7 @@ export async function listEmployees(req: Request, res: Response): Promise<void> 
   res.json({
     success: true,
     data: employees.map(formatEmployee),
-    pagination: { total, page, per_page, total_pages: Math.ceil(total / per_page) },
+    meta: { total, page, per_page, total_pages: Math.ceil(total / per_page) },
   })
 }
 

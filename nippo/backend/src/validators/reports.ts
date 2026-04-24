@@ -38,7 +38,10 @@ export const createReportSchema = z.object({
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, { message: '日付はYYYY-MM-DD形式で入力してください' })
     .refine(
-      (val) => new Date(val).toISOString().startsWith(val),
+      (val) => {
+        const d = new Date(val)
+        return !isNaN(d.getTime()) && d.toISOString().startsWith(val)
+      },
       { message: '有効な日付を入力してください' },
     ),
   problem: z.string().max(2000, { message: '課題・相談は2000文字以内で入力してください' }).optional(),
