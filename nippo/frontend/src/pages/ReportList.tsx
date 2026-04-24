@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { listReports } from '../api/reports'
@@ -6,6 +6,11 @@ import { listEmployees } from '../api/employees'
 import { useAuthStore } from '../store/authStore'
 import Spinner from '../components/Spinner'
 import Pagination from '../components/Pagination'
+
+function todayString(): string {
+  const d = new Date()
+  return [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-')
+}
 
 type SortField = 'report_date' | 'employee_name'
 type SortOrder = 'asc' | 'desc'
@@ -44,6 +49,14 @@ export default function ReportList() {
     enabled: role === 'manager' || role === 'admin',
   })
 
+  const today = useMemo(() => todayString(), [])
+  const { data: todayData } = useQuery({
+    queryKey: ['reports', 'today-check', today],
+    queryFn: () => listReports({ date_from: today, date_to: today, per_page: 1 }),
+    enabled: role === 'sales' || role === 'admin',
+  })
+  const todayReportId = todayData?.data[0]?.id
+
   const handleSearch = () => {
     setPage(1)
     setApplied({ employeeId, dateFrom, dateTo, sort, order })
@@ -62,15 +75,14 @@ export default function ReportList() {
     return applied.order === 'asc' ? '↑' : '↓'
   }
 
-  const today = new Date().toISOString().slice(0, 10)
-  const todayReport = data?.data.find((r) => r.report_date === today && r.employee.id === employee?.id)
-
   return (
     <div>
       <div className="page-header">
         <h1 className="page-title">日報一覧</h1>
-        {(role === 'sales' || role === 'admin') && !todayReport && (
-          <button className="btn btn-primary" onClick={() => navigate('/reports/new')}>+ 新規作成</button>
+        {(role === 'sales' || role === 'admin') && (
+          todayReportId
+            ? <button className="btn btn-secondary" onClick={() => navigate(`/reports/${todayReportId}/edit`)}>今日の日報を編集</button>
+            : <button className="btn btn-primary" onClick={() => navigate('/reports/new')}>+ 新規作成</button>
         )}
       </div>
 

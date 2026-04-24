@@ -9,7 +9,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate()
 
   const handleLogout = async () => {
-    try { await apiLogout() } catch { /* ignore */ }
+    try { await apiLogout() } catch (e) { console.error('Logout failed', e) }
     logout()
     navigate('/login')
   }

@@ -8,25 +8,14 @@ import { getEmployee, createEmployee, updateEmployee, listEmployees } from '../a
 import type { Role } from '../api/types'
 import Spinner from '../components/Spinner'
 
-const createSchema = z.object({
+const schema = z.object({
   name: z.string().min(1, '氏名は必須です').max(50, '50文字以内で入力してください'),
   email: z.string().email('メールアドレスの形式が正しくありません'),
-  password: z.string().min(8, 'パスワードは8文字以上で入力してください').max(100),
+  password: z.union([z.string().min(8, 'パスワードは8文字以上で入力してください').max(100), z.literal('')]),
   role: z.enum(['sales', 'manager', 'admin'] as const),
   manager_id: z.number().int().positive().optional().nullable(),
 })
-
-const updateSchema = z.object({
-  name: z.string().min(1, '氏名は必須です').max(50, '50文字以内で入力してください'),
-  email: z.string().email('メールアドレスの形式が正しくありません'),
-  password: z.string().min(8, 'パスワードは8文字以上で入力してください').max(100).optional().or(z.literal('')),
-  role: z.enum(['sales', 'manager', 'admin'] as const),
-  manager_id: z.number().int().positive().optional().nullable(),
-})
-
-type CreateFormValues = z.infer<typeof createSchema>
-type UpdateFormValues = z.infer<typeof updateSchema>
-type FormValues = CreateFormValues | UpdateFormValues
+type FormValues = z.infer<typeof schema>
 
 const ROLE_LABEL: Record<Role, string> = { sales: '営業担当', manager: '上長', admin: '管理者' }
 
@@ -49,20 +38,14 @@ export default function EmployeeForm() {
     queryFn: () => listEmployees({ per_page: 100, role: 'manager' }),
   })
 
-  const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<FormValues>({
-    resolver: zodResolver(isEdit ? updateSchema : createSchema) as never,
+  const { register, handleSubmit, reset, watch, setError, formState: { errors } } = useForm<FormValues>({
+    resolver: zodResolver(schema),
     defaultValues: { name: '', email: '', password: '', role: 'sales', manager_id: null },
   })
 
   useEffect(() => {
     if (emp) {
-      reset({
-        name: emp.name,
-        email: emp.email,
-        password: '',
-        role: emp.role,
-        manager_id: emp.manager_id,
-      })
+      reset({ name: emp.name, email: emp.email, password: '', role: emp.role, manager_id: emp.manager_id })
     }
   }, [emp, reset])
 
@@ -71,22 +54,20 @@ export default function EmployeeForm() {
   const mutation = useMutation({
     mutationFn: (values: FormValues) => {
       if (isEdit) {
-        const v = values as UpdateFormValues
         return updateEmployee(employeeId, {
-          name: v.name,
-          email: v.email,
-          password: v.password || undefined,
-          role: v.role,
-          manager_id: v.role === 'sales' ? (v.manager_id ?? null) : null,
+          name: values.name,
+          email: values.email,
+          password: values.password || undefined,
+          role: values.role,
+          manager_id: values.role === 'sales' ? (values.manager_id ?? null) : null,
         })
       } else {
-        const v = values as CreateFormValues
         return createEmployee({
-          name: v.name,
-          email: v.email,
-          password: v.password,
-          role: v.role,
-          manager_id: v.role === 'sales' ? (v.manager_id ?? null) : null,
+          name: values.name,
+          email: values.email,
+          password: values.password,
+          role: values.role,
+          manager_id: values.role === 'sales' ? (values.manager_id ?? null) : null,
         })
       }
     },
@@ -98,6 +79,15 @@ export default function EmployeeForm() {
       setSubmitError(err.response?.data?.error?.message ?? '保存に失敗しました')
     },
   })
+
+  const onSubmit = (values: FormValues) => {
+    if (!isEdit && !values.password) {
+      setError('password', { message: 'パスワードは必須です' })
+      return
+    }
+    setSubmitError('')
+    mutation.mutate(values)
+  }
 
   const handleCancel = () => {
     if (confirm('変更を破棄して戻りますか？')) navigate('/employees')
@@ -114,7 +104,7 @@ export default function EmployeeForm() {
       {submitError && <div className="alert alert-error">{submitError}</div>}
 
       <div className="card">
-        <form onSubmit={handleSubmit((v) => { setSubmitError(''); mutation.mutate(v) })}>
+        <form onSubmit={handleSubmit(onSubmit)}>
           <div className="form-group">
             <label className="form-label">氏名<span className="required">*</span></label>
             <input type="text" className={`form-control${errors.name ? ' error' : ''}`} {...register('name')} />
@@ -128,10 +118,10 @@ export default function EmployeeForm() {
           <div className="form-group">
             <label className="form-label">
               パスワード{!isEdit && <span className="required">*</span>}
-              {isEdit && <span className="text-muted" style={{ fontSize: '12px', fontWeight: 400 }}>（変更する場合のみ入力）</span>}
+              {isEdit && <span className="text-muted" style={{ fontSize: '12px', fontWeight: 400, marginLeft: '8px' }}>（変更する場合のみ入力）</span>}
             </label>
-            <input type="password" className={`form-control${'password' in errors && errors.password ? ' error' : ''}`} autoComplete="new-password" {...register('password')} />
-            {'password' in errors && errors.password && <p className="form-error">{errors.password.message}</p>}
+            <input type="password" className={`form-control${errors.password ? ' error' : ''}`} autoComplete="new-password" {...register('password')} />
+            {errors.password && <p className="form-error">{errors.password.message}</p>}
           </div>
           <div className="form-group">
             <label className="form-label">ロール<span className="required">*</span></label>
@@ -145,7 +135,16 @@ export default function EmployeeForm() {
           {watchRole === 'sales' && (
             <div className="form-group">
               <label className="form-label">上長</label>
-              <select className="form-control" {...register('manager_id', { valueAsNumber: true, setValueAs: (v: string) => v === '' || v === 'null' ? null : Number(v) })}>
+              <select
+                className="form-control"
+                {...register('manager_id', {
+                  setValueAs: (v: unknown) => {
+                    if (v === '' || v === null || v === undefined) return null
+                    const n = parseInt(String(v), 10)
+                    return isNaN(n) ? null : n
+                  },
+                })}
+              >
                 <option value="">なし</option>
                 {managerData?.data.map((m) => (
                   <option key={m.id} value={m.id}>{m.name}</option>

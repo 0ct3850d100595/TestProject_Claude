@@ -39,7 +39,13 @@ export default function ReportDetail() {
       reset()
       setSubmitError('')
     },
-    onError: () => setSubmitError('コメントの投稿に失敗しました'),
+    onError: (err: { response?: { status?: number; data?: { error?: { message?: string } } } }) => {
+      if (err.response?.status === 403) {
+        setSubmitError('この日報へのコメント権限がありません')
+      } else {
+        setSubmitError(err.response?.data?.error?.message ?? 'コメントの投稿に失敗しました')
+      }
+    },
   })
 
   const onCommentSubmit = ({ comment }: CommentForm) => {

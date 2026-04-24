@@ -14,17 +14,21 @@ const visitSchema = z.object({
   sort_order: z.number().int(),
 })
 
+function today() {
+  const d = new Date()
+  return [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-')
+}
+
 const schema = z.object({
-  report_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, '日付を選択してください'),
+  report_date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, '日付を選択してください')
+    .refine((v) => v <= today(), '未来の日付は指定できません'),
   problem: z.string().max(2000, '2000文字以内で入力してください').optional(),
   plan: z.string().max(2000, '2000文字以内で入力してください').optional(),
   visit_records: z.array(visitSchema).min(1, '訪問記録は1件以上必要です'),
 })
 type FormValues = z.infer<typeof schema>
-
-function today() {
-  return new Date().toISOString().slice(0, 10)
-}
 
 export default function ReportForm() {
   const { id } = useParams<{ id: string }>()
@@ -45,7 +49,7 @@ export default function ReportForm() {
     queryFn: () => listCustomers({ per_page: 100 }),
   })
 
-  const { register, handleSubmit, control, reset, watch, formState: { errors } } = useForm<FormValues>({
+  const { register, handleSubmit, control, reset, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
       report_date: today(),
@@ -104,7 +108,6 @@ export default function ReportForm() {
   if ((isEdit && reportLoading) || custLoading) return <Spinner center dark />
 
   const todayStr = today()
-  const reportDate = watch('report_date')
 
   return (
     <div>
@@ -125,7 +128,6 @@ export default function ReportForm() {
               {...register('report_date')}
             />
             {errors.report_date && <p className="form-error">{errors.report_date.message}</p>}
-            {reportDate > todayStr && <p className="form-error">未来の日付は指定できません</p>}
           </div>
         </div>
 
