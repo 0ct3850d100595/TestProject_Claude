@@ -91,16 +91,18 @@ describe('POST /v1/reports/:report_id/comment - コメント投稿', () => {
     expect(res.body.error.message).toBe('この日報にはすでにコメントが存在します')
   })
 
-  it('adminが任意の日報にコメントを投稿できる', async () => {
-    const adminReportId = await createReport(employees.adminId, customers.customer1Id, pastDate(3))
+  it('adminが管轄外（部下でない）社員の日報にもコメントを投稿できる', async () => {
+    // otherReportId は manager の部下でない社員の日報（managerは403だが adminは無制限）
     const token = await getToken('admin@example.com')
     const res = await request(app)
-      .post(`/v1/reports/${adminReportId}/comment`)
+      .post(`/v1/reports/${otherReportId}/comment`)
       .set('Authorization', `Bearer ${token}`)
       .send({ comment: '管理者からのコメント' })
 
     expect(res.status).toBe(201)
+    expect(res.body.success).toBe(true)
     expect(res.body.data.comment).toBe('管理者からのコメント')
+    expect(res.body.data.manager.id).toBe(employees.adminId)
   })
 
   it('コメント本文が空で400が返る', async () => {

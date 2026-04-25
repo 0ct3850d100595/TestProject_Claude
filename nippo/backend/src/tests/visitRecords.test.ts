@@ -196,7 +196,7 @@ describe('DELETE /v1/reports/:report_id/visit_records/:id - 訪問記録削除',
     // reportId は sales1 の日報
     const reportDetail = await prisma.dailyReport.findUnique({
       where: { id: reportId },
-      include: { visitRecords: true },
+      include: { visitRecords: { orderBy: { id: 'asc' } } },
     })
     const visitId = reportDetail!.visitRecords[0].id
 

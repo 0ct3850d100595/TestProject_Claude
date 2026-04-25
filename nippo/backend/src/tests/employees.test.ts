@@ -263,6 +263,48 @@ describe('PUT /v1/employees/:id - 社員更新', () => {
     expect(res.status).toBe(403)
     expect(res.body.error.code).toBe('FORBIDDEN')
   })
+
+  it('パスワードを変更すると新パスワードでログインでき、旧パスワードは無効になる（EMP-008）', async () => {
+    const newPassword = 'NewSecurePass99!'
+
+    // テスト専用社員を登録
+    const createRes = await request(app)
+      .post('/v1/employees')
+      .set('Authorization', `Bearer ${await getToken('admin@example.com')}`)
+      .send({
+        name: 'パスワード変更テスト用',
+        email: 'pwchange@example.com',
+        password: TEST_PASSWORD,
+        role: 'sales',
+      })
+    expect(createRes.status).toBe(201)
+    const pwChangeEmpId = createRes.body.data.id as number
+
+    // パスワードを変更
+    const updateRes = await request(app)
+      .put(`/v1/employees/${pwChangeEmpId}`)
+      .set('Authorization', `Bearer ${await getToken('admin@example.com')}`)
+      .send({
+        name: 'パスワード変更テスト用',
+        email: 'pwchange@example.com',
+        role: 'sales',
+        password: newPassword,
+      })
+    expect(updateRes.status).toBe(200)
+
+    // 旧パスワードでログインできないことを確認
+    const oldLoginRes = await request(app)
+      .post('/v1/auth/login')
+      .send({ email: 'pwchange@example.com', password: TEST_PASSWORD })
+    expect(oldLoginRes.status).toBe(401)
+
+    // 新パスワードでログインできることを確認
+    const newLoginRes = await request(app)
+      .post('/v1/auth/login')
+      .send({ email: 'pwchange@example.com', password: newPassword })
+    expect(newLoginRes.status).toBe(200)
+    expect(newLoginRes.body.data.employee.email).toBe('pwchange@example.com')
+  })
 })
 
 describe('DELETE /v1/employees/:id - 社員削除', () => {
