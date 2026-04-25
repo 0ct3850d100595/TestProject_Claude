@@ -1,0 +1,97 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  sales
+  manager
+  admin
+}
+
+model Employee {
+  id           Int       @id @default(autoincrement())
+  name         String    @db.VarChar(50)
+  email        String    @unique @db.VarChar(255)
+  passwordHash String    @map("password_hash") @db.VarChar(255)
+  role         Role      @default(sales)
+  managerId    Int?      @map("manager_id")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  deletedAt    DateTime? @map("deleted_at")
+
+  manager         Employee?        @relation("ManagerSubordinates", fields: [managerId], references: [id], onDelete: SetNull)
+  subordinates    Employee[]       @relation("ManagerSubordinates")
+  dailyReports    DailyReport[]
+  managerComments ManagerComment[]
+
+  @@index([managerId], name: "idx_employees_manager")
+  @@map("employees")
+}
+
+model Customer {
+  id          Int       @id @default(autoincrement())
+  companyName String    @map("company_name") @db.VarChar(100)
+  contactName String    @map("contact_name") @db.VarChar(50)
+  phone       String?   @db.VarChar(20)
+  email       String?   @db.VarChar(255)
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  visitRecords VisitRecord[]
+
+  @@map("customers")
+}
+
+model DailyReport {
+  id         Int      @id @default(autoincrement())
+  employeeId Int      @map("employee_id")
+  reportDate DateTime @map("report_date") @db.Date
+  problem    String?  @db.Text
+  plan       String?  @db.Text
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  employee       Employee        @relation(fields: [employeeId], references: [id], onDelete: Restrict)
+  visitRecords   VisitRecord[]
+  managerComment ManagerComment?
+
+  @@unique([employeeId, reportDate], name: "idx_reports_employee_date")
+  @@index([reportDate], name: "idx_reports_date")
+  @@map("daily_reports")
+}
+
+model VisitRecord {
+  id            Int      @id @default(autoincrement())
+  dailyReportId Int      @map("daily_report_id")
+  customerId    Int      @map("customer_id")
+  visitContent  String   @map("visit_content") @db.Text
+  sortOrder     Int      @default(1) @map("sort_order")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  dailyReport DailyReport @relation(fields: [dailyReportId], references: [id], onDelete: Cascade)
+  customer    Customer    @relation(fields: [customerId], references: [id], onDelete: Restrict)
+
+  @@index([dailyReportId], name: "idx_visits_report")
+  @@index([customerId], name: "idx_visits_customer")
+  @@map("visit_records")
+}
+
+model ManagerComment {
+  id            Int      @id @default(autoincrement())
+  dailyReportId Int      @unique @map("daily_report_id")
+  managerId     Int      @map("manager_id")
+  comment       String   @db.Text
+  commentedAt   DateTime @default(now()) @map("commented_at")
+
+  dailyReport DailyReport @relation(fields: [dailyReportId], references: [id], onDelete: Cascade)
+  manager     Employee    @relation(fields: [managerId], references: [id], onDelete: Restrict)
+
+  @@map("manager_comments")
+}

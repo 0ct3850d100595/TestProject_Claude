@@ -50,10 +50,11 @@ export default function Login() {
 
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="form-group">
-            <label className="form-label">
+            <label htmlFor="email" className="form-label">
               メールアドレス<span className="required">*</span>
             </label>
             <input
+              id="email"
               type="email"
               className={`form-control${errors.email ? ' error' : ''}`}
               autoComplete="email"
@@ -63,10 +64,11 @@ export default function Login() {
           </div>
 
           <div className="form-group">
-            <label className="form-label">
+            <label htmlFor="password" className="form-label">
               パスワード<span className="required">*</span>
             </label>
             <input
+              id="password"
               type="password"
               className={`form-control${errors.password ? ' error' : ''}`}
               autoComplete="current-password"
