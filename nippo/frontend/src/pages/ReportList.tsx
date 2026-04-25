@@ -154,7 +154,7 @@ export default function ReportList() {
                       <td>
                         <div className="flex gap-2">
                           <button className="btn btn-secondary btn-sm" onClick={() => navigate(`/reports/${r.id}`)}>詳細</button>
-                          {(role === 'admin' || r.employee.id === employee?.id) && (
+                          {r.employee.id === employee?.id && (
                             <button className="btn btn-secondary btn-sm" onClick={() => navigate(`/reports/${r.id}/edit`)}>編集</button>
                           )}
                         </div>

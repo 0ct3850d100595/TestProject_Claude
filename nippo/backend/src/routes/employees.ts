@@ -7,7 +7,7 @@ const router = Router()
 
 router.use(authenticate)
 
-router.get('/', authorize('admin'), listEmployees)
+router.get('/', authorize('admin', 'manager'), listEmployees)
 router.get('/:id', getEmployee)
 router.post('/', authorize('admin'), createEmployee)
 router.put('/:id', authorize('admin'), updateEmployee)

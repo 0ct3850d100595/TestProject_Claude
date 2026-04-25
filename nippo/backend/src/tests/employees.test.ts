@@ -46,14 +46,19 @@ describe('GET /v1/employees - 社員一覧', () => {
     expect(res.body.error.code).toBe('FORBIDDEN')
   })
 
-  it('managerが社員一覧にアクセスすると403が返る', async () => {
+  it('managerが社員一覧にアクセスすると自分の部下のみ取得できる', async () => {
     const token = await getToken('manager@example.com')
     const res = await request(app)
       .get('/v1/employees')
       .set('Authorization', `Bearer ${token}`)
 
-    expect(res.status).toBe(403)
-    expect(res.body.error.code).toBe('FORBIDDEN')
+    expect(res.status).toBe(200)
+    expect(res.body.meta.total).toBe(2)
+    const emails = (res.body.data as Array<{ email: string }>).map((e) => e.email)
+    expect(emails).toContain('sales1@example.com')
+    expect(emails).toContain('sales2@example.com')
+    expect(emails).not.toContain('manager@example.com')
+    expect(emails).not.toContain('admin@example.com')
   })
 
   it('ロールフィルターで社員を絞り込める', async () => {

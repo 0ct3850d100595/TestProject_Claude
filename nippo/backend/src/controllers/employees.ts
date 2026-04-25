@@ -61,11 +61,13 @@ export async function listEmployees(req: Request, res: Response): Promise<void> 
     return
   }
 
-  const { page, per_page, role } = queryResult.data
+  const { page, per_page, role: roleFilter } = queryResult.data
+  const { id: userId, role: requesterRole } = req.user
 
   const where = {
     deletedAt: null,
-    ...(role ? { role } : {}),
+    ...(roleFilter ? { role: roleFilter } : {}),
+    ...(requesterRole === 'manager' ? { managerId: userId } : {}),
   }
 
   const [total, employees] = await Promise.all([

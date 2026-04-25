@@ -381,7 +381,7 @@ describe('PUT /v1/reports/:id - 日報更新', () => {
     expect(res.body.error.code).toBe('FORBIDDEN')
   })
 
-  it('adminが任意の日報を更新できる', async () => {
+  it('adminが他人の日報を更新しようとすると403が返る', async () => {
     const token = await getToken('admin@example.com')
     const res = await request(app)
       .put(`/v1/reports/${sales1Report1Id}`)
@@ -394,8 +394,8 @@ describe('PUT /v1/reports/:id - 日報更新', () => {
         ],
       })
 
-    expect(res.status).toBe(200)
-    expect(res.body.data.problem).toBe('admin更新')
+    expect(res.status).toBe(403)
+    expect(res.body.error.code).toBe('FORBIDDEN')
   })
 
   it('更新時に未来日を指定すると400が返る', async () => {
